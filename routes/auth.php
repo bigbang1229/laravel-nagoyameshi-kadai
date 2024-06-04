@@ -65,8 +65,12 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });
+
 Route::middleware('auth:admin')->group(function () {
     Route::post('admin/logout', [Admin\Auth\AuthenticatedSessionController::class, 'destroy'])
                 ->name('admin.logout');
 });
 
+
+Route::get('admin/index', [Admin\UserController::class, 'index'])->name('admin.users.index');
+Route::get('admin/show={$user}', [Admin\UserController::class, 'show'])->name('admin.users.show');
