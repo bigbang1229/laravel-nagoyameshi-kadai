@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Models\User; // Userモデルをインポート
 
 class UserTest extends TestCase
 {
+    use RefreshDatabase; // データベースの初期化を追加
+
     /**
      * A basic feature test example.
      */
@@ -17,23 +20,50 @@ class UserTest extends TestCase
 
         $response->assertRedirect('/admin/login');
     }
+
     public function testAuthenticatedUserCannotAccessAdminMemberList()
-{
-    $user = factory(User::class)->create(); 
-    $this->actingAs($user); 
-
-    $response = $this->get('/admin/login');
-
-    $response->assertStatus(403); 
-}
-public function testAuthenticatedAdminCanAccessAdminMemberList()
     {
-        $admin = factory(User::class)->create(['role' => 'admin']); 
+        $user = User::factory()->create(); // factoryメソッドの修正
+        $this->actingAs($user); 
+
+        $response = $this->get('/admin/member-list');
+
+        $response->assertStatus(403); 
+    }
+
+    public function testAuthenticatedAdminCanAccessAdminMemberList()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);  // factoryメソッドの修正
         $this->actingAs($admin); 
 
-        $response = $this->get('/admin/login');
+        $response = $this->get('/admin/member-list');
 
         $response->assertStatus(200); 
     }
 
+    public function testUnauthenticatedUserCannotAccessMemberDetail()
+    {
+        $response = $this->get('/admin/users/1'); 
+
+        $response->assertRedirect('/login'); 
+    }
+
+    public function testAuthenticatedUserCannotAccessAdminMemberDetail()
+    {
+        $user = User::factory()->create(); // factoryメソッドの修正
+        $this->actingAs($user);
+
+        $response = $this->get('/admin/users/1'); 
+
+        $response->assertStatus(403);
+    }
+
+    public function testAuthenticatedAdminCanAccessAdminMemberDetail()
+    {
+        $admin = User::factory()->create(['role' => 'admin']); // factoryメソッドの修正
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/users/1'); 
+        $response->assertStatus(200);
+    }
 }
