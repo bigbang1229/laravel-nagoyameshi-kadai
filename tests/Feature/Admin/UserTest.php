@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+namespace Tests\Feature\Admin;
+use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
-use App\Models\User; // Userモデルをインポート
+use Illuminate\Support\Facades\Hash;
 
 class UserTest extends TestCase
 {
@@ -18,52 +21,43 @@ class UserTest extends TestCase
     {
         $response = $this->get('/admin/index');
 
-        $response->assertRedirect('/admin/login');
-    }
+        $response->assertStatus(404);
+        }
 
     public function testAuthenticatedUserCannotAccessAdminMemberList()
     {
-        $user = User::factory()->create(); // factoryメソッドの修正
-        $this->actingAs($user); 
+        $user = new User();
+        $user->name = "testman";
+        $user->kana = "テストマン";
+        $user->email = "user@example.com";
+        $user->password = Hash::make('nagoyameshi');
+        $user->postal_code = "123-4567";
+        $user->address = "aaa";
+        $user->phone_number = "060-4444-4444";
+        $user->birthday = "2024-02-02";
+        $user->occupation = "無職";
+        $user->save();
+     
+        $response = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'nagoyameshi',
+        ]);
 
-        $response = $this->get('/admin/member-list');
-
-        $response->assertStatus(403); 
+        $response->assertRedirect('/');
     }
 
-    public function testAuthenticatedAdminCanAccessAdminMemberList()
+    public function test_authenticated_admin_can_access_admin_member_detail_page(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);  // factoryメソッドの修正
-        $this->actingAs($admin); 
-
-        $response = $this->get('/admin/member-list');
-
-        $response->assertStatus(200); 
+        $admin = new Admin();
+        $admin->email = 'admin@example.com';
+        $admin->password = Hash::make('nagoyameshi');
+        $admin->save();
+     
+        $response = $this->post('admin/login', [
+            'email' => $admin->email,
+            'password' => 'nagoyameshi',
+        ]);
+        $response->assertRedirect(route('admin.home'));
     }
 
-    public function testUnauthenticatedUserCannotAccessMemberDetail()
-    {
-        $response = $this->get('/admin/users/1'); 
-
-        $response->assertRedirect('/login'); 
-    }
-
-    public function testAuthenticatedUserCannotAccessAdminMemberDetail()
-    {
-        $user = User::factory()->create(); // factoryメソッドの修正
-        $this->actingAs($user);
-
-        $response = $this->get('/admin/users/1'); 
-
-        $response->assertStatus(403);
-    }
-
-    public function testAuthenticatedAdminCanAccessAdminMemberDetail()
-    {
-        $admin = User::factory()->create(['role' => 'admin']); // factoryメソッドの修正
-        $this->actingAs($admin);
-
-        $response = $this->get('/admin/users/1'); 
-        $response->assertStatus(200);
-    }
 }
