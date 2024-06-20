@@ -28,4 +28,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth:admin
     Route::get('admin/index', [Admin\UserController::class, 'index'])->name('users.index');
     Route::get('admin/show={user}', [Admin\UserController::class, 'show'])->name('users.show');
 });
-Route::get('index', [Admin\UserController::class, 'index'])->name('admin.users.index');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/member-list', 'MemberController@index')->name('member.list');
+});
